@@ -18,16 +18,16 @@ DigitalOut dirPin(p22);
 class Stepper {
 public:
 
-    int stepsPerRev = 10000;
-    float mmPerStep = 0.0005;
+    int stepsPerRev;
+    int stepsPerMM;
 
     int mmToSteps(float mmToMove) {
-        return mmToMove * 2000;
+        return mmToMove * stepsPerMM;
     }
 
     // Constantly move steps
     // dir 1 for down dir 0 for up
-    int move(int dir, float speed = 1) {
+    int move(int dir = 0, float speed = 1) {
         float stepDelay = (1 / speed) * 0.5;
 
         dirPin = dir;
@@ -80,6 +80,8 @@ void makeNoise(int beeps = 2, float speed = 20.0, float freq = 2000.0) {
 // main() runs in its own thread in the OS
 int main() {
     Stepper zAxis;
+    zAxis.stepsPerRev = 10000;
+    zAxis.stepsPerMM = 2000;
 
     int startMainMove = 0;
     int stepCounter = 0;
