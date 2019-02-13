@@ -1,0 +1,7 @@
+BUILD/
+cmake-build-debug
+*.pyc
+.idea/
+*.DS_Store
+.mbed
+mbed_settings.py
