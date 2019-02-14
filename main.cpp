@@ -90,9 +90,9 @@ int main() {
     makeNoise();
 
     while (1) {
-        if (joystickCenter || !externalButton) {
-            wait(0.1);
-            while (joystickCenter || !externalButton) {
+        if (!externalButton) {
+            wait(0.2);
+            while (!externalButton) {
                 pc.printf("Button is pressed\r\n");
                 startMainMove = 1;
             }
@@ -103,10 +103,10 @@ int main() {
             // How far to move down in mm
             int dippingHeight = 100;
             // Speeds to dip and retract in mm/s
-            float dipSpeed = 1.0;
-            float retractSpeed = 0.25;
+            float dipSpeed = 1.5;
+            float retractSpeed = 1.0;
             // How long to stay in the goo for
-            int dwellTime = 180; // Wait 3 minutes
+            int dwellTime = 5 * 60; // Wait 5 minutes
 
 
             pc.printf("Started the dipper\r\n");
@@ -118,18 +118,19 @@ int main() {
             finishedDip = zAxis.moveSteps(zAxis.mmToSteps(dippingHeight), 0, zAxis.mmToSteps(dipSpeed));
 
             if (finishedDip == 1) {
-                pc.printf("Finished Dip, waiting\r\n");
+                finishedDip = 0;
                 wait(dwellTime);
-                pc.printf("Retracting\r\n");
                 makeNoise(1); // Tell the user it's coming back out
+                pc.printf("Finished Dip, retracting\r\n");
                 finishedRetract = zAxis.moveSteps(zAxis.mmToSteps(dippingHeight), 1, zAxis.mmToSteps(retractSpeed));
             }
 
             if (finishedRetract == 1) {
-                pc.printf("Finished retracting\r\n");
+                finishedRetract = 0;
                 startMainMove = 0;
                 led1 = 0;
                 makeNoise(5); // Tell the user it's finished dipping
+                pc.printf("Finished retracting\r\n");
             }
         }
 
