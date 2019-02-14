@@ -10,6 +10,7 @@ DigitalOut led4(LED4);
 DigitalIn joystickDown(p12, PullDown);
 DigitalIn joystickCenter(p14, PullDown);
 DigitalIn joystickUp(p15, PullDown);
+DigitalIn externalButton(p23, PullUp);
 
 PwmOut speakerPin(p26);
 DigitalOut pulsePin(p21);
@@ -59,7 +60,7 @@ public:
 //            pc.printf("%i\r\n", currentMicroStep);
         }
 
-        return 1;
+        return 1; // Finished moving
     }
 };
 
@@ -86,35 +87,49 @@ int main() {
     int startMainMove = 0;
     int stepCounter = 0;
 
-    pc.printf("Started the dipper\r\n");
-
     makeNoise();
 
     while (1) {
-        if (joystickCenter) {
+        if (joystickCenter || !externalButton) {
             wait(0.1);
-            if (joystickCenter) {
+            while (joystickCenter || !externalButton) {
+                pc.printf("Button is pressed\r\n");
                 startMainMove = 1;
-                while (joystickCenter);
             }
         }
 
 
         if (startMainMove == 1) {
+            // How far to move down in mm
+            int dippingHeight = 100;
+            // Speeds to dip and retract in mm/s
+            float dipSpeed = 1.0;
+            float retractSpeed = 0.25;
+            // How long to stay in the goo for
+            int dwellTime = 180; // Wait 3 minutes
+
+
+            pc.printf("Started the dipper\r\n");
             led1 = 1;
-            int dippingHeight = zAxis.mmToSteps(100);
-            int finishedUp = zAxis.moveSteps(dippingHeight, 0, zAxis.mmToSteps(2));
+            makeNoise(1); // Tell the user it's going in
+            int finishedDip = 0;
+            int finishedRetract = 0;
 
-            if (finishedUp) {
-                wait(60);
-                int finishedDown = zAxis.moveSteps(dippingHeight, 1, zAxis.mmToSteps(0.5));
+            finishedDip = zAxis.moveSteps(zAxis.mmToSteps(dippingHeight), 0, zAxis.mmToSteps(dipSpeed));
 
+            if (finishedDip == 1) {
+                pc.printf("Finished Dip, waiting\r\n");
+                wait(dwellTime);
+                pc.printf("Retracting\r\n");
+                makeNoise(1); // Tell the user it's coming back out
+                finishedRetract = zAxis.moveSteps(zAxis.mmToSteps(dippingHeight), 1, zAxis.mmToSteps(retractSpeed));
+            }
 
-                if (finishedDown) {
-                    startMainMove = 0;
-                    led1 = 0;
-                    makeNoise(5);
-                }
+            if (finishedRetract == 1) {
+                pc.printf("Finished retracting\r\n");
+                startMainMove = 0;
+                led1 = 0;
+                makeNoise(5); // Tell the user it's finished dipping
             }
         }
 
